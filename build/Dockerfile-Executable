@@ -1,0 +1,37 @@
+# 基础镜像
+FROM as-gateway-server-environment AS builder
+
+ARG SOURCE_DIR=stock-quotations-gateway
+
+# 代码添加到镜像
+ADD ./ /opt/$SOURCE_DIR
+
+# 设置工作目录
+WORKDIR /opt/$SOURCE_DIR
+
+# 打包
+RUN pyinstaller main.spec
+
+# 镜像
+RUN cp /opt/$SOURCE_DIR/dist/main /opt
+
+WORKDIR /opt
+
+# 基础镜像
+FROM ubuntu AS executable
+
+COPY --from=builder /opt/main /opt/$SOURCE_DIR/main
+
+ENV PRODUCTION=True
+
+# 设置工作目录
+WORKDIR opt/$SOURCE_DIR
+
+ENV PYTHONIOENCODING=utf-8
+
+ENV TZ=Asia/Shanghai
+
+EXPOSE 80
+
+# 执行
+CMD ["./main"]
